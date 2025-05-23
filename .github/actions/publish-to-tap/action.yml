@@ -41,12 +41,6 @@ runs:
           --body "This PR updates the Homebrew formula for ${{ inputs.repo_name }} to ${{ inputs.version }}." \
           --base main \
           --head "$BRANCH"
-<<<<<<< HEAD
-    shell: bash
-    env:
-      GH_TOKEN: ${{ inputs.token }}
-=======
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
->>>>>>> adelynnmckay

@@ -28,8 +28,4 @@ runs:
 
         new_version="v$major.$minor.$patch"
         echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
-<<<<<<< HEAD
-    shell: bash
-=======
       shell: bash
->>>>>>> adelynnmckay
