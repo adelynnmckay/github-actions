@@ -18,53 +18,54 @@ runs:
         set -ouex pipefail
 
         FORMULA="Formula/$(basename "$REPO").rb"
-        VERSION="$VERSION"
         TARBALL_URL="https://github.com/$REPO/archive/refs/tags/$VERSION.tar.gz"
         COMMIT_MSG="github-actions: run $ACTION_NAME for $VERSION"
 
-        # Check tag doesn't exist remotely
+        # Ensure the tag doesn't exist
         if git ls-remote --tags origin | grep -q "refs/tags/$VERSION$"; then
           echo "Error: tag $VERSION already exists on origin"
           exit 1
         fi
 
-        # Create temporary tag to get tarball URL (only needed if the tag must exist to download)
-        git tag "$VERSION"
-        git push origin "$VERSION"
-
-        # Download tarball to calculate sha256
-        SHA=$(curl -sL "$TARBALL_URL" | shasum -a 256 | cut -d' ' -f1)
-
-        # Delete the tag temporarily since the commit isn’t made yet
-        git push --delete origin "$VERSION"
-        git tag -d "$VERSION"
-
-        # 🔧 Pull latest and rebase to avoid push failure
+        # Pull latest to avoid push conflicts
         git pull --rebase origin main
 
-        # Now write formula fully (homepage, url, version, sha256)
+        # TEMP: use dummy sha so we can commit the formula first
+        DUMMY_SHA="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+        # Step 1: Write formula with dummy SHA
         sed -i'' \
           -e "s|^  homepage \".*\"|  homepage \"https://github.com/$REPO\"|" \
           -e "s|^  url \".*\"|  url \"$TARBALL_URL\"|" \
-          -e "s|^  sha256 \".*\"|  sha256 \"$SHA\"|" \
+          -e "s|^  sha256 \".*\"|  sha256 \"$DUMMY_SHA\"|" \
           -e "s|^  version \".*\"|  version \"${VERSION#v}\"|" \
           "$FORMULA"
 
         git config user.name "github-actions"
         git config user.email "github-actions@users.noreply.github.com"
-
         git add "$FORMULA"
         git commit -m "$COMMIT_MSG"
 
-        # Now tag the correct commit
+        # Step 2: Tag & push
         git tag "$VERSION"
-
-        # Push commit and tag
         git push origin HEAD
         git push origin "$VERSION"
 
-        # Create release
+        # Step 3: Get correct SHA from the tagged tarball
+        REAL_SHA=$(curl -sL "$TARBALL_URL" | shasum -a 256 | cut -d' ' -f1)
+
+        # Step 4: Patch formula with real SHA
+        sed -i'' "s|$DUMMY_SHA|$REAL_SHA|" "$FORMULA"
+        git add "$FORMULA"
+        git commit --amend -C HEAD
+
+        # Step 5: Force push updated commit and tag
+        git push --force origin HEAD
+        git push --force origin "$VERSION"
+
+        # Step 6: Create release
         gh release create "$VERSION" --generate-notes
+
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
