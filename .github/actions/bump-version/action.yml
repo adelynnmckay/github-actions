@@ -10,6 +10,8 @@ runs:
   using: "composite"
   steps:
     - run: |
+        set -ouex pipefail
+
         git fetch --tags
         last_tag=$(git tag --sort=-v:refname | grep '^v' | head -n1 || echo "v0.0.0")
         latest_commit=$(git log -1 --pretty=%B)

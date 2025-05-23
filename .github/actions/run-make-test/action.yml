@@ -4,5 +4,7 @@ description: Run `make test`
 runs:
   using: "composite"
   steps:
-    - run: make test
+    - run: |
+        set -ouex pipefail
+        make test
       shell: bash
