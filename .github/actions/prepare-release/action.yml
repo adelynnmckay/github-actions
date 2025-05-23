@@ -39,6 +39,9 @@ runs:
         git push --delete origin "$VERSION"
         git tag -d "$VERSION"
 
+        # 🔧 Pull latest and rebase to avoid push failure
+        git pull --rebase origin main
+
         # Now write formula fully (homepage, url, version, sha256)
         sed -i'' \
           -e "s|^  homepage \".*\"|  homepage \"https://github.com/$REPO\"|" \
