@@ -5,7 +5,7 @@ inputs:
     required: true
 outputs:
   new_version:
-    description: "New version number"
+    value: ${{ steps.bump.outputs.new_version }}
 runs:
   using: "composite"
   steps:
