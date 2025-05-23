@@ -30,7 +30,7 @@ runs:
         # Pull latest to avoid push conflicts
         git pull --rebase origin main
 
-        # TEMP: use dummy sha so we can commit the formula first
+        # TEMP: create temporary commit to calculate SHA
         DUMMY_SHA="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
         # Step 1: Write formula with dummy SHA
@@ -44,26 +44,28 @@ runs:
         git config user.name "github-actions"
         git config user.email "github-actions@users.noreply.github.com"
         git add "$FORMULA"
-        git commit -m "$COMMIT_MSG"
+        git commit -m "$COMMIT_MSG (temp SHA)"
 
-        # Step 2: Tag & push
+        # Step 2: Tag temp commit and push to generate tarball
         git tag "$VERSION"
         git push origin HEAD
         git push origin "$VERSION"
 
-        # Step 3: Get correct SHA from the tagged tarball
+        # Step 3: Get correct SHA from the GitHub tarball for the tag
         REAL_SHA=$(curl -sL "$TARBALL_URL" | shasum -a 256 | cut -d' ' -f1)
 
-        # Step 4: Patch formula with real SHA
+        # Step 4: Patch the formula with the real SHA
         sed -i'' "s|$DUMMY_SHA|$REAL_SHA|" "$FORMULA"
         git add "$FORMULA"
-        git commit --amend -C HEAD
+        git commit --amend -m "$COMMIT_MSG"
 
-        # Step 5: Force push updated commit and tag
+        # Step 5: Move the tag to the new amended commit
+        git tag -d "$VERSION"
+        git tag "$VERSION"
         git push --force origin HEAD
         git push --force origin "$VERSION"
 
-        # Step 6: Create release
+        # Step 6: Create GitHub release
         gh release create "$VERSION" --generate-notes
 
       shell: bash
