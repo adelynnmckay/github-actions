@@ -1,0 +1,70 @@
+name: Prepare Release
+description: Update formula, tag commit, and create GitHub release
+
+inputs:
+  version:
+    required: true
+  repo:
+    required: true
+  token:
+    required: true
+  action_name:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        set -ouex pipefail
+
+        FORMULA="Formula/$(basename "$REPO").rb"
+        VERSION="$VERSION"
+        TARBALL_URL="https://github.com/$REPO/archive/refs/tags/$VERSION.tar.gz"
+        COMMIT_MSG="github-actions: run $ACTION_NAME for $VERSION"
+
+        # Check tag doesn't exist remotely
+        if git ls-remote --tags origin | grep -q "refs/tags/$VERSION$"; then
+          echo "Error: tag $VERSION already exists on origin"
+          exit 1
+        fi
+
+        # Create temporary tag to get tarball URL (only needed if the tag must exist to download)
+        git tag "$VERSION"
+        git push origin "$VERSION"
+
+        # Download tarball to calculate sha256
+        SHA=$(curl -sL "$TARBALL_URL" | shasum -a 256 | cut -d' ' -f1)
+
+        # Delete the tag temporarily since the commit isn’t made yet
+        git push --delete origin "$VERSION"
+        git tag -d "$VERSION"
+
+        # Now write formula fully (homepage, url, version, sha256)
+        sed -i'' \
+          -e "s|^  homepage \".*\"|  homepage \"https://github.com/$REPO\"|" \
+          -e "s|^  url \".*\"|  url \"$TARBALL_URL\"|" \
+          -e "s|^  sha256 \".*\"|  sha256 \"$SHA\"|" \
+          -e "s|^  version \".*\"|  version \"${VERSION#v}\"|" \
+          "$FORMULA"
+
+        git config user.name "github-actions"
+        git config user.email "github-actions@users.noreply.github.com"
+
+        git add "$FORMULA"
+        git commit -m "$COMMIT_MSG"
+
+        # Now tag the correct commit
+        git tag "$VERSION"
+
+        # Push commit and tag
+        git push origin HEAD
+        git push origin "$VERSION"
+
+        # Create release
+        gh release create "$VERSION" --generate-notes
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        REPO: ${{ inputs.repo }}
+        ACTION_NAME: ${{ inputs.action_name }}
+        GH_TOKEN: ${{ inputs.token }}
