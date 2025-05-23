@@ -13,6 +13,9 @@ runs:
   using: "composite"
   steps:
     - run: |
-        echo "Tapping homebrew-tap for ${{ inputs.repo_owner }}"
-        brew tap ${{ inputs.repo_owner }}/homebrew-tap || echo "Tap already exists"
+        set -ouex pipefail
+        echo "Tapping homebrew-tap for $REPO_OWNER"
+        brew tap $REPO_OWNER/homebrew-tap || echo "Tap already exists"
       shell: bash
+      env:
+        REPO_OWNER: ${{ inputs.repo_owner }}

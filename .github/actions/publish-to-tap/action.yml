@@ -19,11 +19,11 @@ runs:
     - run: |
         set -ouex pipefail
 
-        FORMULA_FILE="Formula/${{ inputs.repo_name }}.rb"
-        BRANCH="publish-${{ inputs.repo_name }}-${{ inputs.version }}"
+        FORMULA_FILE="Formula/$REPO_NAME.rb"
+        BRANCH="publish-$REPO_NAME-$VERSION"
 
         echo "Cloning tap repo..."
-        git clone "https://x-access-token:${{ inputs.token }}@github.com/${{ inputs.repo_owner }}/homebrew-tap.git" tap
+        git clone "https://x-access-token:$GH_TOKEN@github.com/$REPO_OWNER/homebrew-tap.git" tap
         cd tap
 
         git config user.name "github-actions"
@@ -33,17 +33,21 @@ runs:
 
         echo "Fetching updated formula from source repo..."
         mkdir -p Formula
-        curl -sL "https://raw.githubusercontent.com/${{ inputs.repo }}/main/${FORMULA_FILE}" -o "${FORMULA_FILE}"
+        curl -sL "https://raw.githubusercontent.com/$REPO/main/${FORMULA_FILE}" -o "${FORMULA_FILE}"
 
         git add "${FORMULA_FILE}"
-        git commit -m "Mirror formula for ${{ inputs.repo_name }} ${inputs.version}"
+        git commit -m "Mirror formula for $REPO_NAME $VERSION"
         git push origin "$BRANCH"
 
         gh pr create \
-          --title "Update formula: ${{ inputs.repo_name }} to ${{ inputs.version }}" \
-          --body "This PR updates the Homebrew formula for ${{ inputs.repo_name }} to ${{ inputs.version }}." \
+          --title "Update formula: $REPO_NAME to $VERSION" \
+          --body "This PR updates the Homebrew formula for $REPO_NAME to $VERSION." \
           --base main \
           --head "$BRANCH"
       shell: bash
       env:
+        REPO_NAME: ${{ inputs.repo_name }}
+        VERSION: ${{ inputs.version }}
+        REPO_OWNER: ${{ inputs.repo_owner }}
+        REPO: ${{ inputs.repo }}
         GH_TOKEN: ${{ inputs.token }}
