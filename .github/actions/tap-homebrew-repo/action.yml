@@ -1,0 +1,18 @@
+name: Tap Homebrew Repo
+description: Tap the user's homebrew-tap
+
+inputs:
+  repo_owner:
+    required: true
+    description: GitHub user or org
+  token:
+    required: true
+    description: GitHub token
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "Tapping homebrew-tap for ${{ inputs.repo_owner }}"
+        brew tap ${{ inputs.repo_owner }}/homebrew-tap || echo "Tap already exists"
+      shell: bash
