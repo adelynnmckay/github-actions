@@ -1,0 +1,31 @@
+name: Bump Version
+description: Determine and bump semantic version based on commit message
+inputs:
+  token:
+    required: true
+outputs:
+  new_version:
+    description: "New version number"
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        git fetch --tags
+        last_tag=$(git tag --sort=-v:refname | grep '^v' | head -n1 || echo "v0.0.0")
+        latest_commit=$(git log -1 --pretty=%B)
+        version=${last_tag#v}
+        IFS=. read -r major minor patch <<EOF
+        $version
+        EOF
+
+        if echo "$latest_commit" | grep -q '\[major\]'; then
+          major=$((major + 1)); minor=0; patch=0
+        elif echo "$latest_commit" | grep -q '\[minor\]'; then
+          minor=$((minor + 1)); patch=0
+        else
+          patch=$((patch + 1))
+        fi
+
+        new_version="v$major.$minor.$patch"
+        echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+    shell: bash
