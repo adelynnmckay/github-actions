@@ -12,7 +12,14 @@ runs:
         git tag "$VERSION"
         git push origin "$VERSION"
         gh release create "$VERSION" --generate-notes
+<<<<<<< HEAD
     shell: bash
     env:
       VERSION: ${{ inputs.version }}
       GH_TOKEN: ${{ inputs.token }}
+=======
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        GH_TOKEN: ${{ inputs.token }}
+>>>>>>> adelynnmckay

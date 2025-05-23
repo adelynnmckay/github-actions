@@ -31,4 +31,8 @@ runs:
         git config user.email "github-actions@users.noreply.github.com"
         git commit -am "github-actions: run ${{ inputs.action_name }} for ${VERSION}"
         git push
+<<<<<<< HEAD
     shell: bash
+=======
+      shell: bash
+>>>>>>> adelynnmckay
