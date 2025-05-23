@@ -32,6 +32,7 @@ runs:
         git checkout -b "$BRANCH"
 
         echo "Fetching updated formula from source repo..."
+        mkdir -p Formula
         curl -sL "https://raw.githubusercontent.com/${{ inputs.repo }}/main/${FORMULA_FILE}" -o "${FORMULA_FILE}"
 
         git add "${FORMULA_FILE}"
