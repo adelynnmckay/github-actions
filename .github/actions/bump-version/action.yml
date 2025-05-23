@@ -9,7 +9,8 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - run: |
+    - id: bump
+      run: |
         set -ouex pipefail
 
         git fetch --tags

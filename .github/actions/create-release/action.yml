@@ -5,9 +5,6 @@ inputs:
     required: true
   version:
     required: true
-outputs:
-  new_version:
-    value: ${{ steps.bump.outputs.new_version }}
 runs:
   using: "composite"
   steps:
